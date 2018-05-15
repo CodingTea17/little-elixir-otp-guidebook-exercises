@@ -24,12 +24,12 @@ defmodule KV.Worker do
   end
 
   def handle_call({:write, key, values}, _from, kv_list) do
-    kv_list = Map.put(kv_list, key, values)
-    {:reply, "good", kv_list}
+    new_kv_list = Map.put(kv_list, key, values)
+    {:reply, "good", new_kv_list}
   end
 
   def handle_call({:read, key}, _from, kv_list) do
-    {:reply, "here it is #{kv_list[key]}", kv_list}
+    {:reply, kv_list[key], kv_list}
   end
 
   # Helper
