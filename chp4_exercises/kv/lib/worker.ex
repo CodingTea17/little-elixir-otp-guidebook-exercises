@@ -29,6 +29,10 @@ defmodule KV.Worker do
     GenServer.cast(@name, {:clear})
   end
 
+  def stop() do
+    GenServer.cast(@name, :stop)
+  end
+
   # Server
 
   def init(:ok) do
@@ -60,6 +64,21 @@ defmodule KV.Worker do
 
   def handle_cast({:clear}, _kv_list) do
     {:noreply, %{}}
+  end
+
+  def handle_cast(:stop, kv_list) do
+    {:stop, :normal, kv_list}
+  end
+
+  def terminate(reason, stats) do
+    IO.puts("Server is being terminated due to #{inspect reason}")
+      inspect(stats)
+    :ok
+  end
+
+  def handle_info(msg, stats) do
+    IO.puts("Msg received #{inspect(msg)}")
+    {:noreply, stats}
   end
 
   # Helper
