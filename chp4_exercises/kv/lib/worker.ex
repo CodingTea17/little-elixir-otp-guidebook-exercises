@@ -17,6 +17,18 @@ defmodule KV.Worker do
     GenServer.call(@name, {:read, key})
   end
 
+  def exist?(key) do
+    GenServer.call(@name, {:exist, key})
+  end
+
+  def delete(key) do
+    GenServer.cast(@name, {:delete, key})
+  end
+
+  def clear() do
+    GenServer.cast(@name, {:clear})
+  end
+
   # Server
 
   def init(:ok) do
@@ -25,16 +37,31 @@ defmodule KV.Worker do
 
   def handle_call({:write, key, values}, _from, kv_list) do
     new_kv_list = Map.put(kv_list, key, values)
-    {:reply, "good", new_kv_list}
+    {:reply, :ok, new_kv_list}
   end
 
   def handle_call({:read, key}, _from, kv_list) do
     {:reply, kv_list[key], kv_list}
   end
 
+  def handle_call({:exist, key}, _from, kv_list) do
+    case Map.has_key?(kv_list, key) do
+      true ->
+        {:reply, true, kv_list}
+      false ->
+        {:reply, false, kv_list}
+    end
+  end
+
+  def handle_cast({:delete, key}, kv_list) do
+    new_kv_list = Map.delete(kv_list, key)
+    {:noreply, new_kv_list}
+  end
+
+  def handle_cast({:clear}, _kv_list) do
+    {:noreply, %{}}
+  end
+
   # Helper
 
-  # def write_to(key, values) do
-  #   IO.puts(kv_list[key])
-  # end
 end
