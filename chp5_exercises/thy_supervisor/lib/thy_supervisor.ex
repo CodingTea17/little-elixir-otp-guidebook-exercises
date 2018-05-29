@@ -1,18 +1,58 @@
 defmodule ThySupervisor do
-  @moduledoc """
-  Documentation for ThySupervisor.
-  """
+  use GenServer
 
-  @doc """
-  Hello world.
+  #######
+  # API #
+  #######
 
-  ## Examples
-
-      iex> ThySupervisor.hello
-      :world
-
-  """
-  def hello do
-    :world
+  def start_link(child_spec_list) do
+    GenServer.start_link(__MODULE__, [child_spec_list])
   end
+
+  ######################
+  # Callback Functions #
+  ######################
+
+  def init([child_spec_list]) do
+    Process.flag(:trap_exit, true)
+    state = child_spec_list
+            |> start_children
+            |> Enum.into(Map.new())
+    {:ok, state}
+  end
+
+  def handle_call({:start_child, child_spec}, _from, state) do
+    case start_child(child_spec) do
+      {:ok, pid} ->
+        new_state = state |> Map.put(pid, child_spec)
+        {:reply, {:ok, pid}, new_state}
+      :error ->
+        {:reply, {:error, "error starting child"}, state}
+    end
+  end
+
+  #####################
+  # Private Functions #
+  #####################
+
+  defp start_child({mod, fun, args}) do
+    case apply(mod, fun, args) do
+      pid when is_pid(pid) ->
+        Process.link(pid)
+        {:ok, pid}
+      _ ->
+        :error
+    end
+  end
+
+  defp start_children([child_spec|rest]) do
+    case start_child(child_spec) do
+      {:ok, pid} ->
+        [{pid, child_spec}|start_children(rest)]
+      :error ->
+        :error
+    end
+  end
+
+  defp start_children([]), do: []
 end
