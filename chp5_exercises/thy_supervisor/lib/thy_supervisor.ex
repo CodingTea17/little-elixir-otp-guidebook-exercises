@@ -9,6 +9,10 @@ defmodule ThySupervisor do
     GenServer.start_link(__MODULE__, [child_spec_list])
   end
 
+  def start_child(supervisor, child_spec) do
+    GenServer.call(supervisor, {:start_child, child_spec})
+  end
+
   ######################
   # Callback Functions #
   ######################
